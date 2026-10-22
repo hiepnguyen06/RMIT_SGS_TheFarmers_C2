@@ -10,6 +10,10 @@ export function adminRouter(deps: Deps) {
     res.json([...deps.store.orders.values()].filter((o) => o.customerSub === req.principal!.sub));
   });
 
+  r.get('/api/requests/mine', authenticate(deps.verifier), requireRole('customer'), (req, res) => {
+    res.json([...deps.store.requests.values()].filter((x) => x.requestedBy === req.principal!.sub).map(({ originalMessage: _m, ...rest }) => rest));
+  });
+
   r.get('/api/admin/audit', authenticate(deps.verifier), requireRole('admin', 'approver'), (req, res) => {
     const type = typeof req.query.type === 'string' ? req.query.type : undefined;
     res.json(deps.audit.list({ type }));
