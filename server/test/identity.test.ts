@@ -44,7 +44,7 @@ describe('agent identity', () => {
     expect((await off(true)).roles).toEqual(['support-agent']);
     const on = makeAgentIdentity(loadConfig({ AUTH_MODE: 'mock', UNSAFE_DEMO: 'true' }), verifier);
     expect((await on(true)).roles).toContain('admin');
-    const prod = makeAgentIdentity(loadConfig({ AUTH_MODE: 'mock', UNSAFE_DEMO: 'true', NODE_ENV: 'production' }), verifier);
+    const prod = makeAgentIdentity(loadConfig({ AUTH_MODE: 'tidecloak', TIDECLOAK_URL: 'http://tc', TIDECLOAK_AUDIENCE: 'a', UNSAFE_DEMO: 'true', NODE_ENV: 'production' }), verifier, fakeFetch().fn);
     expect((await prod(true)).roles).toEqual(['support-agent']);
   });
 });
