@@ -18,6 +18,8 @@ const schema = z
     APPROVALS_REQUIRED: z.coerce.number().default(2),
     APPROVER_COUNT: z.coerce.number().default(3),
     DATA_FILE: z.string().optional(),
+    /** Comma-separated TideCloak user ids that own the seeded demo orders (default: mock subs). */
+    SEED_CUSTOMER_SUBS: z.string().optional(),
   })
   .refine((c) => c.AUTH_MODE !== 'tidecloak' || !!c.TIDECLOAK_URL, {
     message: 'TIDECLOAK_URL is required when AUTH_MODE=tidecloak',

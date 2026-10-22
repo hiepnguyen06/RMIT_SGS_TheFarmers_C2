@@ -11,6 +11,7 @@ import { HttpError } from './types.js';
 import { healthRouter } from './routes/health.js';
 import { approvalsRouter } from './routes/approvals.js';
 import { chatRouter } from './routes/chat.js';
+import { adminRouter } from './routes/admin.js';
 
 export interface Deps {
   config: Config;
@@ -30,6 +31,7 @@ export function createApp(deps: Deps): Express {
   app.use(healthRouter);
   app.use(approvalsRouter(deps));
   app.use(chatRouter(deps));
+  app.use(adminRouter(deps));
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
     console.error(err instanceof Error ? err.message : err);
