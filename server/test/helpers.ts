@@ -3,6 +3,8 @@ import { loadConfig } from '../src/config.js';
 import { createStore } from '../src/store/store.js';
 import { AuditLog } from '../src/audit/audit.js';
 import { makeVerifier } from '../src/auth/jwt.js';
+import { makeClassifier } from '../src/classifier/classifier.js';
+import { ruleAgent } from '../src/agent/agent.js';
 import { seedOrders } from '../src/orders/orders.js';
 
 export const bearer = (sub: string, roles: string) => `Bearer mock:${sub}:${roles}`;
@@ -13,6 +15,10 @@ export function testApp(over: Partial<Deps> = {}, env: Record<string, string> = 
   const store = createStore();
   seedOrders(store, ['cust-an', 'cust-binh']);
   const audit = new AuditLog(store);
-  const deps = { config, store, audit, verifier: makeVerifier(config), ...over } as Deps;
+  const deps = { config, store, audit, verifier: makeVerifier(config),
+    classifier: makeClassifier(config),
+    agent: ruleAgent,
+    agentIdentity: async () => ({ sub: 'agent', name: 'agent', roles: ['support-agent'] }),
+    ...over } as Deps;
   return { app: createApp(deps), deps };
 }
