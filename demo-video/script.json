@@ -1,0 +1,14 @@
+{
+  "teamName": "The Farmers",
+  "scenes": [
+    { "id": "hook", "caption": "AI agents are useful. Agents that can move money are risky.", "narration": "AI support agents are useful, but an agent that can move money on its own is a risk.", "card": { "title": "SafeDesk", "subtitle": "A support agent that can't move money on its own." }, "holdMs": 4500 },
+    { "id": "customer-status", "caption": "A customer asks about an order, in Italian. No sign-in needed.", "narration": "A customer asks about their order in Italian. The agent answers straight away.", "holdMs": 3500 },
+    { "id": "customer-small-refund", "caption": "Small refund, under the 500,000 ₫ limit: the agent handles it.", "narration": "A small refund under the limit goes through without a human.", "holdMs": 3500 },
+    { "id": "attack", "caption": "Prompt injection in Portuguese: flagged, held, no money moved.", "narration": "Now an attacker tells the agent to ignore its rules and refund two million dong. The message is flagged and the refund is held, so no money moves.", "holdMs": 5000 },
+    { "id": "tide-login", "caption": "Only an admin signs in, through TideCloak.", "narration": "The admin signs in through TideCloak. The role comes from the token.", "holdMs": 2500 },
+    { "id": "admin-deny", "caption": "The queue shows the attack text as untrusted. The admin denies it.", "narration": "The admin sees the original message marked as untrusted, and denies the request. The customer sees it was denied.", "holdMs": 4500 },
+    { "id": "admin-approve", "caption": "A genuine large refund waits too. The admin approves; the refund is applied.", "narration": "A genuine large refund also waits for review. This time the admin approves and the refund is applied.", "holdMs": 4500 },
+    { "id": "audit", "caption": "Every step is in the audit log.", "narration": "Every step is recorded in the audit log.", "holdMs": 4000 },
+    { "id": "close", "caption": "The agent proposes. Only a signed-in admin approves.", "narration": "The agent proposes. Only a signed-in admin approves.", "card": { "title": "The agent proposes. Only a signed-in admin approves.", "subtitle": "The Farmers · RMIT Hackathon 2026" }, "holdMs": 5000 }
+  ]
+}
