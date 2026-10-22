@@ -8,6 +8,12 @@ const schema = z
     TIDECLOAK_URL: z.string().optional(),
     TIDECLOAK_REALM: z.string().default('safedesk'),
     TIDECLOAK_AUDIENCE: z.string().optional(),
+    /** Web client id; tokens must carry it as `azp`. */
+    TIDECLOAK_CLIENT_ID: z.string().default('safedesk-web'),
+    /** Adapter JSON from the realm bootstrap; its embedded `jwk` is the only key tokens are verified against. */
+    TIDECLOAK_ADAPTER_FILE: z.string().default('../data/tidecloak.json'),
+    /** Honour x-forwarded-host/-proto when rebuilding the DPoP `htu`. Only behind a proxy you control. */
+    TRUST_FORWARDED_HEADERS: z.enum(['true', 'false']).default('false'),
     AGENT_IDENTITY: z.enum(['simulated', 'client_credentials']).default('client_credentials'),
     AGENT_CLIENT_ID: z.string().optional(),
     AGENT_CLIENT_SECRET: z.string().optional(),

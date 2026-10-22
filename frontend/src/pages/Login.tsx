@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { User } from '@/types'
 
 export default function Login() {
-  const { mode, user, login } = useAuth()
+  const { mode, user, noRole, login, logout } = useAuth()
   const navigate = useNavigate()
   if (user) return <Navigate to={homeFor(user.role)} replace />
 
@@ -48,9 +48,21 @@ export default function Login() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {mode === 'tidecloak' ? (
-              <Button size="lg" className="h-12 text-base" onClick={() => signIn()}>
-                <Lock aria-hidden /> Continue with TideCloak
-              </Button>
+              noRole ? (
+                <>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    You are signed in, but your account has no SafeDesk role yet (customer, approver or admin). Ask the
+                    shop operator to assign one, then sign in again.
+                  </p>
+                  <Button size="lg" variant="outline" className="h-12 text-base" onClick={logout}>
+                    Sign out
+                  </Button>
+                </>
+              ) : (
+                <Button size="lg" className="h-12 text-base" onClick={() => signIn()}>
+                  <Lock aria-hidden /> Continue with TideCloak
+                </Button>
+              )
             ) : (
               <>
                 <div className="flex flex-col gap-2.5">

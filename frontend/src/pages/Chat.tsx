@@ -96,7 +96,7 @@ export default function Chat() {
         </p>
       </aside>
 
-      <main className="flex min-w-0 flex-[999_1_520px] flex-col overflow-hidden rounded-2xl border bg-card">
+      <main className="flex min-w-0 h-[max(32rem,calc(100svh-8rem))] flex-[999_1_520px] flex-col overflow-hidden rounded-2xl border bg-card">
         <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3">
           <h1 className="flex-1 text-lg font-semibold">Support chat</h1>
           <div role="group" aria-label="Language" className="flex gap-1 rounded-xl bg-muted p-1">
@@ -116,7 +116,7 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="flex min-h-80 flex-1 flex-col gap-4 overflow-y-auto bg-muted/30 px-5 py-6" aria-live="polite">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-muted/30 px-5 py-6" aria-live="polite">
           {messages.length === 0 && (
             <div className="m-auto max-w-sm text-center text-sm text-muted-foreground">
               Ask about an order in any supported language, or try one of the demo messages below.
