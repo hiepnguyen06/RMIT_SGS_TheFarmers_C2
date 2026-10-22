@@ -49,6 +49,7 @@ export function chatRouter(deps: Deps) {
       const { reply } = await deps.agent.run({ message, lang, execTool });
       res.json({ reply, label, actions });
     } catch (e) {
+      console.error('agent error:', e instanceof Error ? e.message : e);
       audit.append('agent_error', customer.sub, { error: e instanceof Error ? e.message : String(e) });
       throw new HttpError(502, 'the assistant is unavailable, please try again');
     }
