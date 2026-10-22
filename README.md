@@ -4,7 +4,7 @@ A multilingual customer-support AI agent that cannot move money on its own. It s
 
 RMIT Hackathon 2026, Challenge 2 (`RMIT_SGS_TheFarmers_C2`).
 
-> Status: scaffold only. Nothing is implemented yet.
+> Status: backend API implemented (`server/`); frontend in progress.
 
 ## 1. Vision and originality
 
@@ -43,7 +43,26 @@ _TODO: link to demo video._
 cp .env.example .env   # then fill in the values
 ```
 
-Setup steps for TideCloak and the app will be added as they are built.
+### Backend (Express + TypeScript)
+
+```bash
+cd server
+npm install
+npm test          # unit and end-to-end tests
+npm run demo      # scripted run of the demo scenario (mock auth)
+npm run dev       # API on http://localhost:4000
+```
+
+`AUTH_MODE=mock` accepts `Authorization: Bearer mock:<sub>:<role,role>` for local work; `AUTH_MODE=tidecloak` verifies real TideCloak tokens (see `server/scripts/seed-realm.md`). Without `ANTHROPIC_API_KEY` the agent and attack check use the rule-based fallback.
+
+| Endpoint | Role | Purpose |
+|---|---|---|
+| `POST /api/chat` | customer | message, attack check, agent, policy gate |
+| `GET /api/orders/mine` | customer | own orders |
+| `GET /api/approvals?status=pending` | approver | pending refund requests |
+| `POST /api/approvals/:id/vote` | approver | approve or deny (2 of 3) |
+| `GET /api/admin/audit` | admin | read-only audit log |
+| `GET /api/admin/stats/blocked-by-language` | admin | flagged messages per language |
 
 ## Configuration
 
