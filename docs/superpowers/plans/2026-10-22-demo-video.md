@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Produce a 2-3 minute MP4 demo of SafeDesk (customer prompts, held attack, real TideCloak admin sign-in, admin approve/deny, audit log) by scripting a recorded browser run and rendering captions and title cards in code.
+**Goal:** Produce an MP4 of at most 2 minutes demo of SafeDesk (customer prompts, held attack, real TideCloak admin sign-in, admin approve/deny, audit log) by scripting a recorded browser run and rendering captions and title cards in code.
 
 **Architecture:** A standalone `demo-video/` Node/TypeScript project. One headed Playwright Chromium window is recorded for the whole run. Title cards are HTML pages and captions are an injected DOM overlay, so everything is captured in the same recording. The run starts a fresh API (reset DB) and the frontend, pauses at the Tide sign-in page for the user to type credentials, and logs cut markers. A render step uses an npm-packaged ffmpeg to drop the cut segments and encode MP4.
 
@@ -16,7 +16,7 @@
 - The admin credentials are never written to any file, script, log, caption or test. Automation never types into the Tide page; the user does.
 - The final video must not contain the Tide credential-typing segment (cut via markers).
 - Captions follow README "Real vs simulated": never claim Tide enforces the approval, payments are real, or the audit log is tamper-proof.
-- Output: `demo-video/out/safedesk-demo.mp4`, 1920x1080, H.264, duration between 120 and 180 seconds, plus `demo-video/out/captions.txt` (one narration line per scene).
+- Output: `demo-video/out/safedesk-demo.mp4`, 1920x1080, H.264, duration at most 120 seconds (target 105-118), plus `demo-video/out/captions.txt` (one narration line per scene).
 - Refund limit is 500,000 VND; demo orders are A-1001 (250,000), A-1002 (2,000,000), A-1003 (480,000), customer An Nguyen.
 - Prompts typed by the customer are exactly the `DEMO_PROMPTS` texts in `frontend/src/lib/constants.ts` (it for A-1001, en for A-1003, pt attack for A-1002, vi genuine for A-1002).
 - Team name on cards: `The Farmers` (confirmed by the user); it lives only in `demo-video/script.json` as `teamName`.
@@ -28,7 +28,7 @@
 2. Real-LLM variance: a prompt that does not produce the expected outcome (no pending banner on the attack, no refund on the small one) must abort the take, not record a wrong story.
 3. User never signs in on the Tide page: the pause must time out with a clear error rather than hang forever.
 4. Cut segment at the very start, adjacent cuts, or a cut that never closed: render must still produce valid output or fail loudly.
-5. Total duration outside 120-180 s: render must report it.
+5. Total duration over 120 s: render must fail loudly.
 
 ---
 
@@ -86,7 +86,7 @@
 
 **Interfaces:**
 - Consumes: `loadScript`, `showCaption`, `showCard`, `clearCaption`, `installOverlayOnNavigation`, `startStack`, `assertPortsFree`.
-- Produces: `class Markers { constructor(startMs: number); begin(label: 'cut'): void; end(label: 'cut'): void; cuts(): {startS: number; endS: number}[]; assertClosed(): void }` (times in seconds relative to recording start; `assertClosed` throws if a cut is open); `typeAsCustomer(page: Page, text: string, lang: 'vi'|'pt'|'it'|'en'): Promise<void>` (clicks language button, types into `#msg` with 45 ms per key, clicks the Send button, waits for the "SafeDesk AI is typing…" text to appear and disappear); `expectBanner(page: Page, kind: 'pending'|'none'): Promise<void>` (pending: text "No money has moved" visible within 20 s; none: absent; on failure throws an error that names the scene so the take aborts).
+- Produces: `class Markers { constructor(startMs: number); begin(label: 'cut' | 'fast'): void; end(label: 'cut' | 'fast'): void; cuts(): {startS: number; endS: number}[]; assertClosed(): void }` (times in seconds relative to recording start; `assertClosed` throws if a cut is open); `typeAsCustomer(page: Page, text: string, lang: 'vi'|'pt'|'it'|'en'): Promise<void>` (clicks language button, types into `#msg` with 45 ms per key, clicks the Send button, waits for the "SafeDesk AI is typing…" text to appear and disappear); `expectBanner(page: Page, kind: 'pending'|'none'): Promise<void>` (pending: text "No money has moved" visible within 20 s; none: absent; on failure throws an error that names the scene so the take aborts).
 
 - [ ] **Step 1: Write failing tests** for `Markers`: begin/end produces one cut with `endS > startS`; two cuts are returned in order; `assertClosed` throws with an open cut and passes otherwise; `end` without `begin` throws.
 - [ ] **Step 2: Run** `npx vitest run src/markers.test.ts`. Expected: FAIL.
@@ -117,7 +117,7 @@
 
 **Interfaces:**
 - Consumes: `raw/*.webm`, `raw/markers.json`, `loadScript`.
-- Produces: `keepRanges(totalS: number, cuts: {startS:number;endS:number}[]): {startS:number;endS:number}[]` (complement of the cuts; merges overlapping or adjacent cuts; clamps to `[0,totalS]`; drops zero-length ranges); `buildFfmpegArgs(input: string, ranges: {startS:number;endS:number}[], output: string): string[]` (a `filter_complex` with `trim`/`setpts` per range and `concat`, scale 1920x1080, `libx264 -pix_fmt yuv420p`, no audio); `render(): Promise<{ output: string; durationS: number }>` which runs `ffmpeg-static`, writes `out/safedesk-demo.mp4` and `out/captions.txt`, and prints a warning if `durationS` is outside 120-180.
+- Produces: `keepRanges(totalS: number, cuts: {startS:number;endS:number}[]): {startS:number;endS:number}[]` (complement of the cuts; merges overlapping or adjacent cuts; clamps to `[0,totalS]`; drops zero-length ranges); `buildFfmpegArgs(input: string, ranges: {startS:number;endS:number}[], output: string): string[]` (a `filter_complex` with `trim`/`setpts` per range and `concat`, scale 1920x1080, `libx264 -pix_fmt yuv420p`, no audio); `render(): Promise<{ output: string; durationS: number }>` which runs `ffmpeg-static`, writes `out/safedesk-demo.mp4` and `out/captions.txt`, and throws if `durationS` exceeds 120. To fit, `Markers` also records `fast` ranges (typing and waiting for the AI) that render plays at 4x via `setpts=PTS/4`; `keepRanges` generalises to return `{startS,endS,speed}` segments (cuts removed, fast ranges speed 4, rest speed 1).
 
 - [ ] **Step 1: Write failing tests** for `keepRanges`: no cuts returns the whole range; one middle cut gives two ranges; a cut starting at 0 gives one range; overlapping cuts merge; a cut past `totalS` is clamped. For `buildFfmpegArgs`: output contains one `trim=` per range and a `concat=n=<count>`; the last arg is the output path.
 - [ ] **Step 2: Run** `npx vitest run src/ffmpegArgs.test.ts`. Expected: FAIL.
@@ -132,7 +132,7 @@
 - Modify: `demo-video/package.json` (scripts `record`, `render`, `test`)
 
 - [ ] **Step 1:** Stop any running dev servers, run `npm run record`, let the user sign in at the pause, then `npm run render`.
-- [ ] **Step 2: Verify** with ffprobe-equivalent output from render: duration 120-180 s, 1920x1080. Extract frames at the scene boundaries (using ffmpeg-static) and check by eye: no frame shows the Tide sign-in form with typed text; the amber "No money has moved" banner, the untrusted original message, and the "Approved · refund applied" pill are all visible in the video. Report any failed check; do not claim success otherwise.
+- [ ] **Step 2: Verify** with ffprobe-equivalent output from render: duration at most 120 s, 1920x1080. Extract frames at the scene boundaries (using ffmpeg-static) and check by eye: no frame shows the Tide sign-in form with typed text; the amber "No money has moved" banner, the untrusted original message, and the "Approved · refund applied" pill are all visible in the video. Report any failed check; do not claim success otherwise.
 - [ ] **Step 3: Review captions** against the "Real vs simulated" table.
 - [ ] **Step 4: Commit** `docs(demo-video): usage notes`. Do not commit `out/` or `raw/`.
 

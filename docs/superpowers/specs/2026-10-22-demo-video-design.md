@@ -2,7 +2,7 @@
 
 ## Intent
 
-A 2-3 minute product demo video for the RMIT Hackathon 2026 judging committee (Challenge 2). Judges compare many teams and will not run the app, so the video has to land one idea quickly: **SafeDesk's AI support agent serves customers, but anything risky waits for a human admin's approval, and that admin identity is enforced through TideCloak.**
+A product demo video of at most 2 minutes (target 1:45-1:55) for the RMIT Hackathon 2026 judging committee (Challenge 2). Judges compare many teams and will not run the app, so the video has to land one idea quickly: **SafeDesk's AI support agent serves customers, but anything risky waits for a human admin's approval, and that admin identity is enforced through TideCloak.**
 
 Success: a judge who watches once can say, in one sentence, "the agent can't move money on its own; a signed-in admin has to approve."
 
@@ -10,7 +10,7 @@ Success: a judge who watches once can say, in one sentence, "the agent can't mov
 
 - Audience: judging committee.
 - Key message: human-in-the-loop safety.
-- Length: 2-3 minutes.
+- Length: at most 2 minutes (user tightened this from 2-3 minutes after the storyboard was written).
 - Style: mix of title cards, a recorded run of the real app, and on-screen captions. Captions first; a voiceover can be added later, so the script is written as narration lines that double as captions.
 - Production: automated end to end (browser run recorded by script, final video rendered by code).
 - Show the **real TideCloak admin login**. The user types the admin credentials themselves on camera; automation pauses on the Tide page and resumes once the app is back on localhost:5173. The credentials are never written to files, scripts, logs or captions.
@@ -34,7 +34,7 @@ Success: a judge who watches once can say, in one sentence, "the agent can't mov
 - The video must not overclaim. It does not say Tide enforces the approval (approval is enforced in app code), that payments are real, or that the audit log is tamper-proof.
 - The admin password must never appear in the final video. The Tide sign-in typing segment is cut or sped past.
 
-## Storyboard (my proposal, about 2:30)
+## Storyboard (my proposal, about 1:50; scene times below are the original 2:30 draft and must be compressed, with waiting for the AI and typing sped up in the render)
 
 1. **Hook card (0:00-0:12).** "AI agents are useful. Agents that can move money are risky." Then: "SafeDesk: a support agent that can't move money on its own."
 2. **Customer, normal (0:12-0:35).** Shop chat, Italian: order status for A-1001. Agent answers. Guardrails panel shows BENIGN.
@@ -72,4 +72,4 @@ Success: a judge who watches once can say, in one sentence, "the agent can't mov
 ## Open items for the user
 
 - Team name and any tagline for the opening and closing cards.
-- Whether the judging format requires a specific file type, resolution or hard length limit (assumed MP4, 1080p, under 3 minutes).
+- Whether the judging format requires a specific file type, resolution or hard length limit (assumed MP4, 1080p, under 2 minutes).
