@@ -9,6 +9,6 @@ npm run dev
 
 - `src/lib/engine.ts`: mock attack check, agent replies, refund limit and 2-of-3 voting rules
 - `src/store.tsx`: app state (user, chat, requests, audit log)
-- `src/pages/`: Login, Chat (customer), Approvals (approver, admin view-only), Audit (approver, admin)
+- `src/pages/`: Login (admin only), Chat (public customer, no sign-in), Approvals (admin), Audit (admin)
 
-Demo path: sign in as Linh Tran, send the Portuguese attack, then sign in as two approvers and deny it. "Reset demo data" is on the login page.
+Demo path: open the shop chat (no sign-in), send the Portuguese attack, then use **Staff sign-in** as the admin and deny it.

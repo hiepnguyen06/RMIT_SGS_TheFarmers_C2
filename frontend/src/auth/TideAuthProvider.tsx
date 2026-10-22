@@ -4,8 +4,8 @@ import { makeApi, type AuthFetch } from '@/lib/api'
 import type { Role, User } from '@/types'
 import { AUTH_MODE, Ctx, type Auth } from './context'
 
-/** Highest-privilege role first; the UI shows one role per person. */
-const ROLE_ORDER: Role[] = ['admin', 'approver', 'customer']
+/** Only admins sign in; the admin is also the approver. */
+const ROLE_ORDER: Role[] = ['admin']
 
 function Splash({ children }: { children: ReactNode }) {
   return <div className="flex min-h-svh items-center justify-center p-6 text-muted-foreground">{children}</div>

@@ -1,7 +1,7 @@
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type Connect, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite'
 
 /**
  * The Tide enclave loads a relay page at /tide_dpop/iss/<hex>/aud/<hex>/... during login. It parses
@@ -24,8 +24,9 @@ function tideDpopRelay(): Plugin {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss(), tideDpopRelay()],
-  server: { proxy: { '/api': 'http://localhost:4000' } },
+  // API_URL (frontend/.env.local) points the dev proxy at another API port.
+  server: { proxy: { '/api': loadEnv(mode, process.cwd(), '').API_URL || 'http://localhost:4000' } },
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
-})
+}))

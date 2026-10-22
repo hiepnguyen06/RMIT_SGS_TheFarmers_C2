@@ -11,7 +11,7 @@ import { seedOrders } from './orders/orders.js';
 
 const config = loadConfig();
 const store = createStore(config.DATA_FILE);
-if (store.orders.size === 0) seedOrders(store, config.SEED_CUSTOMER_SUBS?.split(','));
+if (store.orders.size === 0) seedOrders(store, [config.PUBLIC_CUSTOMER_SUB]);
 const verifier = makeVerifier(config);
 const hasKey = !!config.OPENAI_API_KEY;
 const deps = {

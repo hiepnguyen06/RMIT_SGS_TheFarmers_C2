@@ -7,7 +7,7 @@ import { HttpError } from '../types.js';
 
 export function approvalsRouter(deps: Deps) {
   const r = Router();
-  r.use('/api/approvals', authenticate(deps.verifier), requireRole('approver'));
+  r.use('/api/approvals', authenticate(deps.verifier), requireRole('admin'));
 
   r.get('/api/approvals', (req, res) => {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;

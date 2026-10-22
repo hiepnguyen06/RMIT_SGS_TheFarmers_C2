@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import { bearer, testApp } from './helpers.js';
+import { testApp } from './helpers.js';
 
-const an = bearer('cust-an', 'customer');
-const chat = (t: ReturnType<typeof testApp>, message: string, lang = 'en', auth = an) =>
-  request(t.app).post('/api/chat').set('Authorization', auth).send({ message, lang });
+const chat = (t: ReturnType<typeof testApp>, message: string, lang = 'en') =>
+  request(t.app).post('/api/chat').send({ message, lang });
 
 describe('POST /api/chat', () => {
   it('answers an order question in Italian', async () => {
@@ -50,11 +49,15 @@ describe('POST /api/chat', () => {
     expect(res.body.reply).not.toContain('Bát Tràng');
     expect(res.body.reply).not.toContain('900000');
   });
-  it('rejects unsupported lang, empty message, missing role', async () => {
+  it('rejects unsupported lang and empty message', async () => {
     const t = testApp();
     expect((await chat(t, 'hi', 'xx')).status).toBe(400);
     expect((await chat(t, '', 'en')).status).toBe(400);
-    expect((await chat(t, 'hi', 'en', bearer('ap1', 'approver'))).status).toBe(403);
+  });
+  it('needs no sign-in: it acts as the fixed public customer', async () => {
+    const t = testApp();
+    expect((await chat(t, 'Qual è lo stato del mio ordine A-1001?', 'it')).status).toBe(200);
+    expect(t.deps.audit.list({ type: 'message' })[0].actorSub).toBe('cust-an');
   });
   it('agent failure -> 502 generic, audit kept', async () => {
     const t = testApp({ agent: { run: async () => { throw new Error('secret internal detail'); } } });

@@ -1,6 +1,6 @@
 # SafeDesk
 
-A multilingual customer-support AI agent that cannot move money on its own. It signs in to TideCloak with a narrow role, and any refund above a limit waits for 2 of 3 human approvers.
+A multilingual customer-support AI agent that cannot move money on its own. It signs in to TideCloak with a narrow role, and any refund above a limit waits for an admin's approval. Customers are public and need no account; the admin is the only signed-in human and also the approver.
 
 RMIT Hackathon 2026, Challenge 2 (`RMIT_SGS_TheFarmers_C2`).
 
@@ -30,10 +30,10 @@ _TODO: link to demo video._
 
 | Part | Status | Note |
 |---|---|---|
-| TideCloak login and roles | Simulated for now | Dev persona login (`VITE_AUTH_MODE=mock`). The real TideCloak realm could not be created on 22 Oct: Tide's licensing service returned errors (`setUpTideRealm`, 4 attempts). Bootstrap scripts are in `scripts/tidecloak/`. |
+| TideCloak login and roles | Wired, mock fallback kept | The `safedesk` realm is licensed and the app has a real Tide login with DPoP (`VITE_AUTH_MODE=tidecloak`); the API verifies EdDSA tokens and DPoP proofs. Roles still have to be granted to Tide users (see "Real TideCloak login"). `VITE_AUTH_MODE=mock` is the fallback. |
 | Agent identity with a narrow role | TBD | Real if FR8 lands, otherwise simulated |
 | Attack check | Real | LLM prompt with rule-based fallback |
-| 2-of-3 approval | Simulated | Enforced in app code, not by Tide |
+| Admin approval | Simulated | Enforced in app code, not by Tide. One approval by default (`APPROVALS_REQUIRED=1`, `APPROVER_COUNT=1`); raise both if you add admin accounts |
 | Orders and refunds | Simulated | Mock data, no payments |
 | Audit log | Real, in app | Not tamper-proof |
 
@@ -52,9 +52,20 @@ cd server && AUTH_MODE=mock npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Sign in as a persona on the login page. Demo path: An Nguyen sends the Portuguese attack, then sign in as Approver 1 and Approver 2 (separate browser tabs or profiles) and deny it. Checked end to end in the browser on 22 Oct 2026 (mock login, rule-based agent): Italian order question, Portuguese injection held and flagged, two approvers deny it, a genuine large refund approved by two different approvers and applied, audit log shows every step. The contrast shot (same attack against an admin-token agent) runs through the API only: `cd server && npm run demo`.
+Open http://localhost:5173: the shop chat needs no sign-in and acts as one fixed public customer (An Nguyen, `PUBLIC_CUSTOMER_SUB` / `PUBLIC_CUSTOMER_NAME`). Demo path: the customer sends the Portuguese attack, it is flagged and held; click **Staff sign-in**, sign in as the admin, and deny it; then a genuine large refund is approved by the admin and applied, and the audit log shows every step. Checked end to end in the browser on 22 Oct 2026 (mock admin login, one approval). The contrast shot (same attack against an admin-token agent) runs through the API only: `cd server && npm run demo`. The public chat is rate limited per client address (`CHAT_RATE_LIMIT`, 30 per 10 minutes).
 
 The agent and attack check use OpenAI when `OPENAI_API_KEY` is set, otherwise the rule-based fallback.
+
+### Real TideCloak login
+
+1. Start TideCloak and bootstrap the realm: `scripts/tidecloak/bootstrap-tidecloak.sh` (needs `TIDE_LICENSE_EMAIL`, `TIDE_TERMS_ACCEPTED=yes` and `TIDECLOAK_ADMIN_PASSWORD` in `.env`). It exports `data/tidecloak.json`.
+2. Copy the adapter into the frontend: `cp data/tidecloak.json frontend/public/tidecloak.json` (gitignored; it is per realm).
+3. In `.env` set `AUTH_MODE=tidecloak` and `TIDECLOAK_AUDIENCE=safedesk-web`; in `frontend/.env.local` set `VITE_AUTH_MODE=tidecloak`.
+4. Run the API on :4000 and the frontend on :5173 (the realm only redirects to `http://localhost:5173`).
+
+How it works: the browser signs in through the Tide enclave and gets a DPoP-bound, EdDSA-signed access token. `frontend/src/auth/TideAuthProvider.tsx` sends every API call through `secureFetch`, which adds a DPoP proof. `server/src/auth/jwt.ts` checks the token against the key embedded in the adapter JSON (no remote key fetch), the issuer, audience and `azp`, then the proof (`server/src/auth/dpop.ts`: method, URL, token hash, key binding, replay). A stolen token replayed as `Bearer` is rejected. The jti replay store is in memory, so it is correct for one API process only.
+
+Only admins sign in. A signed-in user without the `admin` role sees a "not an admin" message. The `admin` role is granted in the TideCloak console and, because IGA is on, approved there before it takes effect. Customers never sign in, so there is no `customer` or `approver` role to grant.
 
 ### Backend (Express + TypeScript)
 
@@ -70,10 +81,10 @@ npm run dev       # API on http://localhost:4000
 
 | Endpoint | Role | Purpose |
 |---|---|---|
-| `POST /api/chat` | customer | message, attack check, agent, policy gate |
-| `GET /api/orders/mine` | customer | own orders |
-| `GET /api/approvals?status=pending` | approver | pending refund requests |
-| `POST /api/approvals/:id/vote` | approver | approve or deny (2 of 3) |
+| `POST /api/chat` | public (fixed customer) | message, attack check, agent, policy gate; rate limited |
+| `GET /api/orders/mine` | public (fixed customer) | the customer's orders |
+| `GET /api/approvals?status=pending` | admin | pending refund requests |
+| `POST /api/approvals/:id/vote` | admin | approve or deny (quorum from `APPROVALS_REQUIRED`) |
 | `GET /api/admin/audit` | admin | read-only audit log |
 | `GET /api/admin/stats/blocked-by-language` | admin | flagged messages per language |
 

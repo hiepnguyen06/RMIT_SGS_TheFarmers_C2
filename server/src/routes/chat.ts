@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { Deps } from '../app.js';
-import { authenticate, requireRole } from '../auth/jwt.js';
+import { publicCustomer, rateLimit } from '../auth/customer.js';
 import { createRequest } from '../approvals/approvals.js';
 import { authorize, executeRefund } from '../policy/policy.js';
 import { getOrderOnBehalf } from '../orders/orders.js';
@@ -13,7 +13,7 @@ const body = z.object({ message: z.string().min(1).max(2000), lang: z.enum(LANGS
 export function chatRouter(deps: Deps) {
   const r = Router();
 
-  r.post('/api/chat', authenticate(deps.verifier), requireRole('customer'), async (req, res) => {
+  r.post('/api/chat', rateLimit(deps.config.CHAT_RATE_LIMIT), publicCustomer(deps.config), async (req, res) => {
     const parsed = body.safeParse(req.body);
     if (!parsed.success) throw new HttpError(400, 'message (1-2000 chars) and lang (vi|pt|fr|it|en) are required');
     const { message, lang } = parsed.data;

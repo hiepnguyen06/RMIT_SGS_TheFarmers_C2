@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { usePolling } from '@/hooks/usePolling'
 import { ApiError } from '@/lib/api'
-import { APPROVER_COUNT, POLL_MS, QUORUM, REFUND_LIMIT, formatVnd } from '@/lib/constants'
+import { APPROVAL_TEXT, APPROVER_COUNT, POLL_MS, QUORUM, REFUND_LIMIT, formatVnd } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { RefundRequest } from '@/types'
 
@@ -16,7 +16,7 @@ export default function Approvals() {
   const { api, user } = useAuth()
   const { data, error, reload } = usePolling(api.approvals, POLL_MS)
   const [busy, setBusy] = useState<string>()
-  const canVote = user!.role === 'approver'
+  const canVote = !!user
   const pending = (data ?? []).filter((r) => r.status === 'pending')
   const done = (data ?? []).filter((r) => r.status !== 'pending')
 
@@ -40,12 +40,9 @@ export default function Approvals() {
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
         <h1 className="text-3xl font-semibold tracking-tight">Approval queue</h1>
         <p className="text-muted-foreground">
-          {pending.length} pending · each needs {QUORUM} of {APPROVER_COUNT} approvals
+          {pending.length} pending · each needs {APPROVAL_TEXT}
         </p>
       </div>
-      {!canVote && (
-        <p className="text-sm text-muted-foreground">Admins can view requests but can't approve or deny them.</p>
-      )}
       {error && (
         <Alert variant="destructive">
           <TriangleAlert aria-hidden />

@@ -5,9 +5,8 @@ import { bearer, testApp } from './helpers.js';
 describe('PRD demo scenario', () => {
   it('runs steps 1-6 end to end', async () => {
     const t = testApp();
-    const an = bearer('cust-an', 'customer');
-    const chat = (message: string, lang: string) => request(t.app).post('/api/chat').set('Authorization', an).send({ message, lang });
-    const vote = (id: string, sub: string, v: string) => request(t.app).post(`/api/approvals/${id}/vote`).set('Authorization', bearer(sub, 'approver')).send({ vote: v });
+    const chat = (message: string, lang: string) => request(t.app).post('/api/chat').send({ message, lang });
+    const vote = (id: string, v: string) => request(t.app).post(`/api/approvals/${id}/vote`).set('Authorization', bearer('adm', 'admin')).send({ vote: v });
 
     // 1. Italian order question
     const q = await chat('Qual è lo stato del mio ordine A-1001?', 'it');
@@ -18,21 +17,19 @@ describe('PRD demo scenario', () => {
     expect(atk.body.label).toBe('PROMPT_INJECTION');
     const rid = atk.body.actions.at(-1).requestId as string;
 
-    // 4. Visible to approvers with message and flag
-    const queue = await request(t.app).get('/api/approvals?status=pending').set('Authorization', bearer('ap1', 'approver'));
+    // 4. Visible to the admin with message and flag
+    const queue = await request(t.app).get('/api/approvals?status=pending').set('Authorization', bearer('adm', 'admin'));
     expect(queue.body[0]).toMatchObject({ id: rid, flag: 'PROMPT_INJECTION' });
 
-    // 5. Two deny
-    await vote(rid, 'ap1', 'deny');
-    expect((await vote(rid, 'ap2', 'deny')).body.status).toBe('denied');
+    // 5. The admin denies it
+    expect((await vote(rid, 'deny')).body.status).toBe('denied');
     expect(t.deps.store.orders.get('A-1002')!.status).toBe('paid');
 
-    // 6. Genuine large refund approved by two different approvers
+    // 6. Genuine large refund approved by the admin
     const real = await chat('My espresso machine arrived broken, please refund order A-1002', 'en');
     expect(real.body.label).toBe('BENIGN');
     const rid2 = real.body.actions.at(-1).requestId as string;
-    await vote(rid2, 'ap1', 'approve');
-    expect((await vote(rid2, 'ap3', 'approve')).body.status).toBe('approved');
+    expect((await vote(rid2, 'approve')).body.status).toBe('approved');
     expect(t.deps.store.orders.get('A-1002')!.status).toBe('refunded');
 
     const types = t.deps.audit.list().map((e) => e.type);

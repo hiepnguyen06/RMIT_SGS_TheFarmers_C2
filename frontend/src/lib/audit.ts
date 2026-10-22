@@ -24,7 +24,7 @@ export function toRow(e: AuditEvent): AuditRow {
     case 'flag':
       return { ...base, kind: d.label === 'JAILBREAK' ? 'JAILBREAK' : 'PROMPT_INJECTION', detail: str(d.text), lang }
     case 'refund_pending':
-      return { ...base, kind: 'REQUEST', detail: `${str(d.id)} raised for order ${str(d.orderId)}, ${formatVnd(Number(d.amountVnd))}. Sent to approvers.` }
+      return { ...base, kind: 'REQUEST', detail: `${str(d.id)} raised for order ${str(d.orderId)}, ${formatVnd(Number(d.amountVnd))}. Sent to an admin for approval.` }
     case 'refund_executed':
       return { ...base, kind: 'APPLIED', detail: `Order ${str(d.orderId)} refunded ${formatVnd(Number(d.amountVnd))}.` }
     case 'vote':

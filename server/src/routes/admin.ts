@@ -1,20 +1,21 @@
 import { Router } from 'express';
 import type { Deps } from '../app.js';
 import { authenticate, requireRole } from '../auth/jwt.js';
+import { publicCustomer } from '../auth/customer.js';
 import { LANGS } from '../types.js';
 
 export function adminRouter(deps: Deps) {
   const r = Router();
 
-  r.get('/api/orders/mine', authenticate(deps.verifier), requireRole('customer'), (req, res) => {
+  r.get('/api/orders/mine', publicCustomer(deps.config), (req, res) => {
     res.json([...deps.store.orders.values()].filter((o) => o.customerSub === req.principal!.sub));
   });
 
-  r.get('/api/requests/mine', authenticate(deps.verifier), requireRole('customer'), (req, res) => {
+  r.get('/api/requests/mine', publicCustomer(deps.config), (req, res) => {
     res.json([...deps.store.requests.values()].filter((x) => x.requestedBy === req.principal!.sub).map(({ originalMessage: _m, ...rest }) => rest));
   });
 
-  r.get('/api/admin/audit', authenticate(deps.verifier), requireRole('admin', 'approver'), (req, res) => {
+  r.get('/api/admin/audit', authenticate(deps.verifier), requireRole('admin'), (req, res) => {
     const type = typeof req.query.type === 'string' ? req.query.type : undefined;
     res.json(deps.audit.list({ type }));
   });

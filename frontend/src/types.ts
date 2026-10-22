@@ -1,4 +1,5 @@
-export type Role = 'customer' | 'approver' | 'admin'
+/** The only signed-in role: the shop admin, who is also the approver. Customers are public and never sign in. */
+export type Role = 'admin'
 export type Lang = 'vi' | 'pt' | 'fr' | 'it' | 'en'
 export type AttackLabel = 'BENIGN' | 'JAILBREAK' | 'PROMPT_INJECTION'
 

@@ -4,10 +4,10 @@ The API only needs these things from TideCloak (realm `safedesk`):
 
 | Item | Value |
 | --- | --- |
-| Realm roles | `customer`, `approver`, `admin`, `support-agent` |
+| Realm roles | `admin`, `support-agent`. Customers are public and have no role or account |
 | Web client | `safedesk-web` (public, used by `@tidecloak/react`); set `TIDECLOAK_AUDIENCE` if its tokens carry a custom `aud` |
 | Agent client | confidential, service account enabled, **only** realm role `support-agent`; put its id/secret in `AGENT_CLIENT_ID` / `AGENT_CLIENT_SECRET` |
-| Users | 2 customers, 3 approvers, 1 admin. Set `SEED_CUSTOMER_SUBS` to the two customers' user ids |
+| Users | 1 admin (also the approver). Add more admins only together with `APPROVALS_REQUIRED` / `APPROVER_COUNT` |
 
 Run with `AUTH_MODE=tidecloak`, `TIDECLOAK_URL=http://localhost:8080`. If login is not working by 12:00, run with `AUTH_MODE=mock` and say so in the README.
 

@@ -14,6 +14,6 @@ describe('health', () => {
   });
   it('defaults policy values', () => {
     const c = loadConfig({});
-    expect([c.REFUND_LIMIT_VND, c.APPROVALS_REQUIRED, c.APPROVER_COUNT, c.PORT]).toEqual([500000, 2, 3, 4000]);
+    expect([c.REFUND_LIMIT_VND, c.APPROVALS_REQUIRED, c.APPROVER_COUNT, c.PORT]).toEqual([500000, 1, 1, 4000]);
   });
 });

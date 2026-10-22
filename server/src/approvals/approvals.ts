@@ -36,7 +36,7 @@ export function vote(
 ): RefundRequest {
   const req = store.requests.get(requestId);
   if (!req) throw new HttpError(404, 'request not found');
-  if (!approver.roles.includes('approver')) throw new HttpError(403, 'approver role required');
+  if (!approver.roles.includes('admin')) throw new HttpError(403, 'admin role required');
   if (req.status !== 'pending') throw new HttpError(409, `request already ${req.status}`);
   if (approver.sub === req.requestedBy) throw new HttpError(403, 'cannot vote on your own request');
   if (req.votes.some((x) => x.approverSub === approver.sub)) throw new HttpError(409, 'already voted');

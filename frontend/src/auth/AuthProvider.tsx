@@ -6,14 +6,8 @@ import { TideAuthProvider } from './TideAuthProvider'
 
 export { AUTH_MODE, useAuth }
 
-/** Dev personas for mock mode; the API must run with AUTH_MODE=mock and seed these customers. */
-export const PERSONAS: User[] = [
-  { id: 'cust-an', name: 'An Nguyen', role: 'customer' },
-  { id: 'ap1', name: 'Approver 1', role: 'approver' },
-  { id: 'ap2', name: 'Approver 2', role: 'approver' },
-  { id: 'ap3', name: 'Approver 3', role: 'approver' },
-  { id: 'adm', name: 'Shop operator', role: 'admin' },
-]
+/** Mock-mode admin; the API must run with AUTH_MODE=mock. Customers never sign in. */
+export const PERSONAS: User[] = [{ id: 'adm', name: 'Shop operator', role: 'admin' }]
 
 const KEY = 'safedesk.persona'
 

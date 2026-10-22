@@ -1,4 +1,5 @@
-export const ROLES = ['customer', 'support-agent', 'approver', 'admin'] as const;
+/** `customer` is the fixed public identity (never signed in); `admin` is the only signed-in human and also the approver. */
+export const ROLES = ['customer', 'support-agent', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
 export const LANGS = ['vi', 'pt', 'fr', 'it', 'en'] as const;
 export type Lang = (typeof LANGS)[number];

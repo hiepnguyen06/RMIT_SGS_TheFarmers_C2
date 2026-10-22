@@ -8,9 +8,7 @@
   "roles": {
     "realm": [
       { "name": "appUser", "description": "Standard application user" },
-      { "name": "customer", "description": "SafeDesk customer" },
-      { "name": "approver", "description": "SafeDesk refund approver" },
-      { "name": "admin", "description": "SafeDesk shop operator" },
+      { "name": "admin", "description": "SafeDesk shop operator and refund approver" },
       { "name": "support-agent", "description": "SafeDesk AI agent, narrow role" },
       { "name": "_tide_enabled", "description": "Represents a tide user thats allowed perform actions on tide" },
       { "name": "_tide_encryptor", "description": "RelationshipAttestation:1: may encrypt records a policy grants to this user (name fixed by the ORK contract). Capability only; the policy subject decides which records." },

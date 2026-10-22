@@ -42,3 +42,6 @@ export function makeApi(authFetch: AuthFetch) {
 }
 
 export type Api = ReturnType<typeof makeApi>
+
+/** The shop is public: the customer chat needs no sign-in, so it uses a plain fetch. */
+export const publicApi: Api = makeApi((input, init) => fetch(input, init))

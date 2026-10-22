@@ -7,7 +7,7 @@ export const AUTH_MODE: 'mock' | 'tidecloak' = import.meta.env.VITE_AUTH_MODE ==
 export interface Auth {
   mode: typeof AUTH_MODE
   user: User | null
-  /** Signed in at TideCloak, but the token carries none of customer, approver or admin. */
+  /** Signed in at TideCloak, but the token does not carry the admin role. */
   noRole: boolean
   api: Api
   login: (persona?: User) => void

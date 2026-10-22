@@ -22,11 +22,16 @@ const schema = z
     OPENAI_API_KEY: z.string().optional(),
     AGENT_MODEL: z.string().default('gpt-4o-mini'),
     REFUND_LIMIT_VND: z.coerce.number().default(500000),
-    APPROVALS_REQUIRED: z.coerce.number().default(2),
-    APPROVER_COUNT: z.coerce.number().default(3),
+    /** Approvals a refund needs. Admins are the approvers, so with one admin account this is 1. */
+    APPROVALS_REQUIRED: z.coerce.number().default(1),
+    /** Number of admin accounts that can vote; a request is denied once approval is no longer reachable. */
+    APPROVER_COUNT: z.coerce.number().default(1),
     DATA_FILE: z.string().optional(),
-    /** Comma-separated TideCloak user ids that own the seeded demo orders (default: mock subs). */
-    SEED_CUSTOMER_SUBS: z.string().optional(),
+    /** The shop's public customer. Chat needs no sign-in; every chat acts as this fixed identity. */
+    PUBLIC_CUSTOMER_SUB: z.string().default('cust-an'),
+    PUBLIC_CUSTOMER_NAME: z.string().default('An Nguyen'),
+    /** Chat messages allowed per client address per 10 minutes (the chat endpoint is public). */
+    CHAT_RATE_LIMIT: z.coerce.number().int().positive().default(30),
   })
   .refine((c) => c.AUTH_MODE !== 'tidecloak' || !!c.TIDECLOAK_URL, {
     message: 'TIDECLOAK_URL is required when AUTH_MODE=tidecloak',

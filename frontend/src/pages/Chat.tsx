@@ -1,6 +1,5 @@
 import { Clock, Send, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useAuth } from '@/auth/AuthProvider'
 import { LabelBadge } from '@/components/badges'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -8,8 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { usePolling } from '@/hooks/usePolling'
-import { ApiError } from '@/lib/api'
-import { AGENT_NAME, DEMO_PROMPTS, LANGS, POLL_MS, QUORUM, REFUND_LIMIT, formatVnd } from '@/lib/constants'
+import { ApiError, publicApi } from '@/lib/api'
+import { AGENT_NAME, APPROVAL_TEXT, DEMO_PROMPTS, LANGS, POLL_MS, QUORUM, REFUND_LIMIT, formatVnd } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { ChatMessage, Lang, Order, RefundRequest } from '@/types'
 
@@ -27,9 +26,8 @@ const STATUS_TEXT: Record<Order['status'], { text: string; cls: string }> = {
 }
 
 export default function Chat() {
-  const { api } = useAuth()
-  const orders = usePolling(api.orders, POLL_MS)
-  const requests = usePolling(api.myRequests, POLL_MS)
+  const orders = usePolling(publicApi.orders, POLL_MS)
+  const requests = usePolling(publicApi.myRequests, POLL_MS)
   const [lang, setLang] = useState<Lang>('it')
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -52,7 +50,7 @@ export default function Chat() {
     const mine: ChatMessage = { id: nextId.current++, from: 'customer', text: clean }
     setMessages((m) => [...m, mine])
     try {
-      const res = await api.chat(clean, l)
+      const res = await publicApi.chat(clean, l)
       const pending = res.actions.find((a) => a.outcome === 'pending')
       setMessages((m) => [
         ...m.map((x) => (x.id === mine.id ? { ...x, label: res.label } : x)),
@@ -180,7 +178,7 @@ export default function Chat() {
             <Separator />
             <Fact label="Auto-refund limit">
               <span className="text-2xl font-semibold">{formatVnd(REFUND_LIMIT)}</span>
-              <span className="text-sm text-muted-foreground">Anything higher needs 2 of 3 humans</span>
+              <span className="text-sm text-muted-foreground">Anything higher needs {APPROVAL_TEXT}</span>
             </Fact>
             <Separator />
             <Fact label="Last message check">

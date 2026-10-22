@@ -7,7 +7,7 @@ import { createRequest, vote } from '../src/approvals/approvals.js';
 import type { Principal } from '../src/types.js';
 
 const agent: Principal = { sub: 'agent', name: 'agent', roles: ['support-agent'] };
-const ap = (sub: string): Principal => ({ sub, name: sub, roles: ['approver'] });
+const ap = (sub: string): Principal => ({ sub, name: sub, roles: ['admin'] });
 const refundCall = { tool: 'issue_refund' as const, orderId: 'A-1002', amountVnd: 2000000, reason: 'x' };
 
 describe('duplicate pending requests', () => {
@@ -25,13 +25,12 @@ describe('duplicate pending requests', () => {
     const d = authorize({ ...refundCall, amountVnd: 1000 }, agent, { ...t.deps, customerSub: 'cust-an' });
     expect(d.allow).toBe(false);
   });
-  it('quorum on a request whose order is already refunded resolves to denied, with audit', () => {
+  it('approval on a request whose order is already refunded resolves to denied, with audit', () => {
     const t = testApp();
     const { store, audit, config } = t.deps;
     const req = createRequest(store, audit, { call: refundCall, customerSub: 'cust-an', originalMessage: 'm', flag: 'BENIGN' });
     store.orders.get('A-1002')!.status = 'refunded';
-    vote(store, audit, config, req.id, ap('a1'), 'approve');
-    const out = vote(store, audit, config, req.id, ap('a2'), 'approve');
+    const out = vote(store, audit, config, req.id, ap('a1'), 'approve');
     expect(out.status).toBe('denied');
     expect(audit.list({ type: 'request_resolved' })).toHaveLength(1);
     expect(audit.list({ type: 'refund_executed' })).toHaveLength(0);
@@ -45,6 +44,10 @@ describe('config hardening', () => {
   });
   it('mock auth is refused in production', () => {
     expect(() => loadConfig({ AUTH_MODE: 'mock', NODE_ENV: 'production' })).toThrow(/mock/);
+  });
+  it('defaults to one admin and one approval', () => {
+    const c = loadConfig({});
+    expect([c.APPROVALS_REQUIRED, c.APPROVER_COUNT, c.PUBLIC_CUSTOMER_SUB]).toEqual([1, 1, 'cust-an']);
   });
   it('quorum settings must satisfy 1 <= required <= count', () => {
     expect(() => loadConfig({ APPROVALS_REQUIRED: '0' })).toThrow();

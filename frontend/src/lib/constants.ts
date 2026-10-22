@@ -1,8 +1,10 @@
 import type { Lang } from '@/types'
 
 export const REFUND_LIMIT = 500_000
-export const QUORUM = 2
-export const APPROVER_COUNT = 3
+/** Mirrors the API's APPROVALS_REQUIRED / APPROVER_COUNT (one admin, one approval by default). */
+export const QUORUM = 1
+export const APPROVER_COUNT = 1
+export const APPROVAL_TEXT = QUORUM === 1 ? "an admin's approval" : `${QUORUM} of ${APPROVER_COUNT} admins`
 export const AGENT_NAME = 'support-agent'
 export const POLL_MS = 3000
 
