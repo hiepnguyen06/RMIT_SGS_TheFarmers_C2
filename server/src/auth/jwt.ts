@@ -95,7 +95,9 @@ export const authenticate =
         headers: { get: (name) => req.get(name) ?? null },
       });
       next();
-    } catch {
+    } catch (e) {
+      // The client only ever sees a generic 401; the reason stays in the server log.
+      console.warn(`auth rejected (${req.method} ${req.originalUrl}): ${e instanceof Error ? e.message : String(e)}`);
       res.status(401).json({ error: 'invalid token' });
     }
   };

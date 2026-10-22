@@ -31,7 +31,7 @@ _TODO: link to demo video._
 | Part | Status | Note |
 |---|---|---|
 | TideCloak login and roles | Wired, mock fallback kept | The `safedesk` realm is licensed and the app has a real Tide login with DPoP (`VITE_AUTH_MODE=tidecloak`); the API verifies EdDSA tokens and DPoP proofs. Roles still have to be granted to Tide users (see "Real TideCloak login"). `VITE_AUTH_MODE=mock` is the fallback. |
-| Agent identity with a narrow role | TBD | Real if FR8 lands, otherwise simulated |
+| Agent identity with a narrow role | Simulated | `AGENT_IDENTITY=simulated`: the API gives the agent the `support-agent` role itself. The realm has no agent service client yet; `client_credentials` is coded but untested against a Tide realm |
 | Attack check | Real | LLM prompt with rule-based fallback |
 | Admin approval | Simulated | Enforced in app code, not by Tide. One approval by default (`APPROVALS_REQUIRED=1`, `APPROVER_COUNT=1`); raise both if you add admin accounts |
 | Orders and refunds | Simulated | Mock data, no payments |

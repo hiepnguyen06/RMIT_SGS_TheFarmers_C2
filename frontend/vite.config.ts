@@ -26,7 +26,16 @@ function tideDpopRelay(): Plugin {
 
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss(), tideDpopRelay()],
-  // API_URL (frontend/.env.local) points the dev proxy at another API port.
-  server: { proxy: { '/api': loadEnv(mode, process.cwd(), '').API_URL || 'http://localhost:4000' } },
+  server: {
+    proxy: {
+      '/api': {
+        // API_URL (frontend/.env.local) points the dev proxy at another API port.
+        target: loadEnv(mode, process.cwd(), '').API_URL || 'http://localhost:4000',
+        // Keep the browser's Host. A DPoP proof is signed for the URL the browser used
+        // (localhost:5173); the string shorthand rewrites Host to the API and every proof then fails the htu check.
+        changeOrigin: false,
+      },
+    },
+  },
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
 }))
