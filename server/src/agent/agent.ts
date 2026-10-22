@@ -62,7 +62,7 @@ const T = {
   },
 } as const;
 
-const ORDER_ID = /\b([A-Z]-\d{4})\b/i;
+export const ORDER_ID =/\b([A-Z]-\d{4})\b/i;
 const REFUND_WORD = /reembols|rembours|rimbors|refund|hoan tien|hoàn tiền/i;
 
 /** Deterministic agent: safe default for the demo when no OPENAI_API_KEY is set. */
