@@ -65,7 +65,7 @@ const T = {
 const ORDER_ID = /\b([A-Z]-\d{4})\b/i;
 const REFUND_WORD = /reembols|rembours|rimbors|refund|hoan tien|hoàn tiền/i;
 
-/** Deterministic agent: safe default for the demo when no ANTHROPIC_API_KEY is set. */
+/** Deterministic agent: safe default for the demo when no OPENAI_API_KEY is set. */
 export const ruleAgent: AgentEngine = {
   async run({ message, lang, execTool }) {
     const m = ORDER_ID.exec(message);
