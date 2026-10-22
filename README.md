@@ -52,7 +52,9 @@ cd server && AUTH_MODE=mock npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Sign in as a persona on the login page. Demo path: An Nguyen sends the Portuguese attack, then sign in as Approver 1 and Approver 2 (separate browser tabs or profiles) and deny it. The agent and attack check use OpenAI when `OPENAI_API_KEY` is set, otherwise the rule-based fallback.
+Sign in as a persona on the login page. Demo path: An Nguyen sends the Portuguese attack, then sign in as Approver 1 and Approver 2 (separate browser tabs or profiles) and deny it. Checked end to end in the browser on 22 Oct 2026 (mock login, rule-based agent): Italian order question, Portuguese injection held and flagged, two approvers deny it, a genuine large refund approved by two different approvers and applied, audit log shows every step. The contrast shot (same attack against an admin-token agent) runs through the API only: `cd server && npm run demo`.
+
+The agent and attack check use OpenAI when `OPENAI_API_KEY` is set, otherwise the rule-based fallback.
 
 ### Backend (Express + TypeScript)
 
