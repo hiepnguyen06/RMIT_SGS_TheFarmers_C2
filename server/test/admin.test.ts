@@ -15,9 +15,15 @@ describe('admin', () => {
     const flags = await request(t.app).get('/api/admin/audit?type=flag').set('Authorization', adm);
     expect(flags.body).toHaveLength(1);
   });
-  it('approver and customer cannot read the audit log', async () => {
+  it('approver can read the audit log but not the stats', async () => {
     const t = testApp();
-    for (const a of [bearer('ap1', 'approver'), bearer('c', 'customer')]) {
+    const ap = bearer('ap1', 'approver');
+    expect((await request(t.app).get('/api/admin/audit').set('Authorization', ap)).status).toBe(200);
+    expect((await request(t.app).get('/api/admin/stats/blocked-by-language').set('Authorization', ap)).status).toBe(403);
+  });
+  it('customer cannot read the audit log', async () => {
+    const t = testApp();
+    for (const a of [bearer('c', 'customer')]) {
       expect((await request(t.app).get('/api/admin/audit').set('Authorization', a)).status).toBe(403);
     }
     expect((await request(t.app).get('/api/admin/audit')).status).toBe(401);

@@ -8,6 +8,7 @@ const schema = z
     TIDECLOAK_URL: z.string().optional(),
     TIDECLOAK_REALM: z.string().default('safedesk'),
     TIDECLOAK_AUDIENCE: z.string().optional(),
+    AGENT_IDENTITY: z.enum(['simulated', 'client_credentials']).default('client_credentials'),
     AGENT_CLIENT_ID: z.string().optional(),
     AGENT_CLIENT_SECRET: z.string().optional(),
     UNSAFE_DEMO: z.enum(['true', 'false']).default('false'),

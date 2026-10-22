@@ -25,7 +25,7 @@ export function makeAgentIdentity(
 
   return async (unsafe = false): Promise<Principal> => {
     if (unsafe && config.UNSAFE_DEMO === 'true' && config.NODE_ENV !== 'production') return UNSAFE_AGENT;
-    if (config.AUTH_MODE === 'mock') return MOCK_AGENT;
+    if (config.AUTH_MODE === 'mock' || config.AGENT_IDENTITY === 'simulated') return MOCK_AGENT;
     if (cached && cached.expiresAt > now()) return cached.principal;
 
     const url = `${config.TIDECLOAK_URL!.replace(/\/$/, '')}/realms/${config.TIDECLOAK_REALM}/protocol/openid-connect/token`;
