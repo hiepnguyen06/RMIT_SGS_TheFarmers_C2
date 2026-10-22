@@ -11,7 +11,11 @@ export function approvalsRouter(deps: Deps) {
 
   r.get('/api/approvals', (req, res) => {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-    res.json([...deps.store.requests.values()].filter((x) => !status || x.status === status));
+    res.json(
+      [...deps.store.requests.values()]
+        .filter((x) => !status || x.status === status)
+        .map((x) => ({ ...x, item: deps.store.orders.get(x.orderId)?.item })),
+    );
   });
 
   r.post('/api/approvals/:id/vote', (req, res) => {

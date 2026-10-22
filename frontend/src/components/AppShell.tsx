@@ -1,9 +1,9 @@
 import { ShieldCheck } from 'lucide-react'
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useStore } from '@/store'
 import type { Role } from '@/types'
 
 const NAV: { to: string; label: string; roles: Role[] }[] = [
@@ -15,8 +15,7 @@ const NAV: { to: string; label: string; roles: Role[] }[] = [
 export const homeFor = (role: Role) => (role === 'customer' ? '/chat' : role === 'approver' ? '/approvals' : '/audit')
 
 export function AppShell({ roles }: { roles: Role[] }) {
-  const { state, logout } = useStore()
-  const user = state.user
+  const { user, logout } = useAuth()
   if (!user) return <Navigate to="/login" replace />
   if (!roles.includes(user.role)) return <Navigate to={homeFor(user.role)} replace />
 

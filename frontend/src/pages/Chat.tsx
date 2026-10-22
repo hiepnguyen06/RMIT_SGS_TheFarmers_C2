@@ -1,16 +1,17 @@
-import { Clock, Send } from 'lucide-react'
+import { Clock, Send, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useAuth } from '@/auth/AuthProvider'
 import { LabelBadge } from '@/components/badges'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { AGENT_NAME, DEMO_PROMPTS, LANGS, REFUND_LIMIT } from '@/data/mock'
-import { formatVnd } from '@/lib/engine'
+import { usePolling } from '@/hooks/usePolling'
+import { ApiError } from '@/lib/api'
+import { AGENT_NAME, DEMO_PROMPTS, LANGS, POLL_MS, QUORUM, REFUND_LIMIT, formatVnd } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { useStore } from '@/store'
-import type { ChatMessage, Lang, Order } from '@/types'
+import type { ChatMessage, Lang, Order, RefundRequest } from '@/types'
 
 const PLACEHOLDER: Record<Lang, string> = {
   vi: 'Nhập tin nhắn…',
@@ -21,49 +22,72 @@ const PLACEHOLDER: Record<Lang, string> = {
 }
 
 const STATUS_TEXT: Record<Order['status'], { text: string; cls: string }> = {
-  out_for_delivery: { text: 'Out for delivery', cls: 'text-emerald-700 dark:text-emerald-400' },
-  delivered: { text: 'Delivered', cls: 'text-muted-foreground' },
+  paid: { text: 'Paid', cls: 'text-emerald-700 dark:text-emerald-400' },
   refunded: { text: 'Refunded', cls: 'text-amber-700 dark:text-amber-400' },
 }
 
 export default function Chat() {
-  const { state, send } = useStore()
-  const user = state.user!
+  const { api } = useAuth()
+  const orders = usePolling(api.orders, POLL_MS)
+  const requests = usePolling(api.myRequests, POLL_MS)
   const [lang, setLang] = useState<Lang>('it')
   const [draft, setDraft] = useState('')
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string>()
   const endRef = useRef<HTMLDivElement>(null)
+  const nextId = useRef(1)
 
-  const orders = state.orders.filter((o) => o.customerId === user.id)
-  const mine = state.requests.filter((r) => r.requesterId === user.id)
-  const lastCheck = [...state.messages].reverse().find((m) => m.from === 'customer')
+  const lastCheck = [...messages].reverse().find((m) => m.from === 'customer')
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
-  }, [state.messages.length])
+  }, [messages.length])
+
+  const send = async (text: string, l: Lang) => {
+    const clean = text.trim()
+    if (!clean || sending) return
+    setSending(true)
+    setError(undefined)
+    const mine: ChatMessage = { id: nextId.current++, from: 'customer', text: clean }
+    setMessages((m) => [...m, mine])
+    try {
+      const res = await api.chat(clean, l)
+      const pending = res.actions.find((a) => a.outcome === 'pending')
+      setMessages((m) => [
+        ...m.map((x) => (x.id === mine.id ? { ...x, label: res.label } : x)),
+        { id: nextId.current++, from: 'agent', text: res.reply, requestId: pending?.requestId },
+      ])
+      void orders.reload()
+      void requests.reload()
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Something went wrong')
+    } finally {
+      setSending(false)
+    }
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    const text = draft.trim()
-    if (!text) return
-    send(text, lang)
+    const text = draft
     setDraft('')
+    void send(text, lang)
   }
 
   return (
     <div className="flex flex-1 flex-wrap items-stretch gap-6 p-4 sm:px-8 sm:py-6">
       <aside aria-label="Your orders" className="flex max-w-80 flex-1 basis-64 flex-col gap-3">
         <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Your orders</h2>
-        {orders.map((o) => (
+        {orders.error && !orders.data && <ErrorNote message={orders.error.message} onRetry={orders.reload} />}
+        {orders.data?.map((o) => (
           <Card key={o.id} size="sm">
             <CardContent className="flex flex-col gap-1.5">
               <div className="flex justify-between font-mono text-sm">
                 <span>#{o.id}</span>
-                <span>{formatVnd(o.amount)}</span>
+                <span>{formatVnd(o.amountVnd)}</span>
               </div>
               <div className="font-medium">{o.item}</div>
-              <div className={cn('text-sm', STATUS_TEXT[o.status].cls)}>
-                ● {STATUS_TEXT[o.status].text} · {o.statusDate}
-              </div>
+              <div className={cn('text-sm', STATUS_TEXT[o.status].cls)}>● {STATUS_TEXT[o.status].text}</div>
             </CardContent>
           </Card>
         ))}
@@ -93,14 +117,21 @@ export default function Chat() {
         </div>
 
         <div className="flex min-h-80 flex-1 flex-col gap-4 overflow-y-auto bg-muted/30 px-5 py-6" aria-live="polite">
-          {state.messages.length === 0 && (
+          {messages.length === 0 && (
             <div className="m-auto max-w-sm text-center text-sm text-muted-foreground">
               Ask about an order in any supported language, or try one of the demo messages below.
             </div>
           )}
-          {state.messages.map((m) => (
-            <Bubble key={m.id} m={m} />
+          {messages.map((m) => (
+            <Bubble key={m.id} m={m} request={requests.data?.find((r) => r.id === m.requestId)} />
           ))}
+          {sending && <div className="self-start text-sm text-muted-foreground">SafeDesk AI is typing…</div>}
+          {error && (
+            <Alert variant="destructive">
+              <TriangleAlert aria-hidden />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div ref={endRef} />
         </div>
 
@@ -111,9 +142,10 @@ export default function Chat() {
               size="sm"
               variant="outline"
               className="h-9"
+              disabled={sending}
               onClick={() => {
                 setLang(p.lang)
-                send(p.text, p.lang)
+                void send(p.text, p.lang)
               }}
             >
               {p.label}
@@ -131,7 +163,7 @@ export default function Chat() {
             placeholder={PLACEHOLDER[lang]}
             className="h-11"
           />
-          <Button type="submit" size="lg" className="h-11 px-5">
+          <Button type="submit" size="lg" className="h-11 px-5" disabled={sending || !draft.trim()}>
             <Send aria-hidden /> Send
           </Button>
         </form>
@@ -143,7 +175,7 @@ export default function Chat() {
           <CardContent className="flex flex-col gap-4">
             <Fact label="Agent identity">
               <span className="font-mono text-sm">{AGENT_NAME}</span>
-              <span className="text-sm text-muted-foreground">Signed in to TideCloak with a narrow role</span>
+              <span className="text-sm text-muted-foreground">Signed in with a narrow role</span>
             </Fact>
             <Separator />
             <Fact label="Auto-refund limit">
@@ -170,8 +202,8 @@ export default function Chat() {
         <Card size="sm">
           <CardContent className="flex flex-col gap-2.5">
             <span className="text-xs text-muted-foreground">Your refund requests</span>
-            {mine.length === 0 && <span className="text-sm text-muted-foreground">None</span>}
-            {mine.map((r) => (
+            {(requests.data ?? []).length === 0 && <span className="text-sm text-muted-foreground">None</span>}
+            {requests.data?.map((r) => (
               <div key={r.id} className="flex items-center justify-between text-sm">
                 <span className="font-mono">{r.id}</span>
                 <span
@@ -182,7 +214,7 @@ export default function Chat() {
                   )}
                 >
                   {r.status === 'pending'
-                    ? `Pending · ${r.votes.filter((v) => v.decision === 'approved').length}/2`
+                    ? `Pending · ${r.votes.filter((v) => v.vote === 'approve').length}/${QUORUM}`
                     : r.status === 'approved'
                       ? 'Approved'
                       : 'Denied'}
@@ -196,6 +228,20 @@ export default function Chat() {
   )
 }
 
+function ErrorNote({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <Alert variant="destructive">
+      <TriangleAlert aria-hidden />
+      <AlertDescription className="flex flex-col items-start gap-2">
+        {message}
+        <Button size="sm" variant="outline" onClick={onRetry}>
+          Retry
+        </Button>
+      </AlertDescription>
+    </Alert>
+  )
+}
+
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -205,9 +251,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   )
 }
 
-function Bubble({ m }: { m: ChatMessage }) {
-  const { state } = useStore()
-  const req = m.requestId ? state.requests.find((r) => r.id === m.requestId) : undefined
+function Bubble({ m, request }: { m: ChatMessage; request?: RefundRequest }) {
   const mineMsg = m.from === 'customer'
   return (
     <div className={cn('flex max-w-[78%] flex-col gap-1.5', mineMsg ? 'items-end self-end' : 'items-start self-start')}>
@@ -229,16 +273,15 @@ function Bubble({ m }: { m: ChatMessage }) {
       {mineMsg && m.label && (
         <div className="flex items-center gap-2 text-xs">
           <LabelBadge label={m.label} />
-          {m.label !== 'BENIGN' && <span className="text-muted-foreground">flagged · {m.score?.toFixed(2)}</span>}
+          {m.label !== 'BENIGN' && <span className="text-muted-foreground">flagged</span>}
         </div>
       )}
-      {m.tool && <div className="font-mono text-xs text-muted-foreground">tool: {m.tool}</div>}
-      {req && req.status === 'pending' && (
+      {m.requestId && request && request.status === 'pending' && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
           <Clock aria-hidden />
           <AlertDescription className="text-amber-950 dark:text-amber-100">
-            <strong>Request {req.id} is waiting for review.</strong>{' '}
-            {req.votes.filter((v) => v.decision === 'approved').length} of 2 approvals. No money has moved.
+            <strong>Request {request.id} is waiting for review.</strong>{' '}
+            {request.votes.filter((v) => v.vote === 'approve').length} of {QUORUM} approvals. No money has moved.
           </AlertDescription>
         </Alert>
       )}

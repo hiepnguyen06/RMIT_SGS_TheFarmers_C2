@@ -15,9 +15,15 @@ describe('admin', () => {
     const flags = await request(t.app).get('/api/admin/audit?type=flag').set('Authorization', adm);
     expect(flags.body).toHaveLength(1);
   });
-  it('approver and customer cannot read the audit log', async () => {
+  it('approver can read the audit log but not the stats', async () => {
     const t = testApp();
-    for (const a of [bearer('ap1', 'approver'), bearer('c', 'customer')]) {
+    const ap = bearer('ap1', 'approver');
+    expect((await request(t.app).get('/api/admin/audit').set('Authorization', ap)).status).toBe(200);
+    expect((await request(t.app).get('/api/admin/stats/blocked-by-language').set('Authorization', ap)).status).toBe(403);
+  });
+  it('customer cannot read the audit log', async () => {
+    const t = testApp();
+    for (const a of [bearer('c', 'customer')]) {
       expect((await request(t.app).get('/api/admin/audit').set('Authorization', a)).status).toBe(403);
     }
     expect((await request(t.app).get('/api/admin/audit')).status).toBe(401);
@@ -48,5 +54,22 @@ describe('admin', () => {
     const res = await request(t.app).get('/api/orders/mine').set('Authorization', bearer('cust-an', 'customer'));
     expect(res.body.every((o: any) => o.customerSub === 'cust-an')).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);
+  });
+  it('customer sees only their own requests, without the raw message', async () => {
+    const t = testApp();
+    const send = (sub: string, o: string) => request(t.app).post('/api/chat').set('Authorization', bearer(sub, 'customer'))
+      .send({ message: `refund order ${o} please`, lang: 'en' });
+    await send('cust-an', 'A-1002');
+    await send('cust-binh', 'B-2003');
+    const res = await request(t.app).get('/api/requests/mine').set('Authorization', bearer('cust-an', 'customer'));
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({ orderId: 'A-1002', status: 'pending' });
+    expect(res.body[0].originalMessage).toBeUndefined();
+  });
+  it('approval list includes the item name', async () => {
+    const t = testApp();
+    await request(t.app).post('/api/chat').set('Authorization', bearer('cust-an', 'customer')).send({ message: 'refund order A-1002', lang: 'en' });
+    const res = await request(t.app).get('/api/approvals').set('Authorization', bearer('ap1', 'approver'));
+    expect(res.body[0].item).toBe('Máy xay cà phê');
   });
 });

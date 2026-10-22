@@ -1,35 +1,40 @@
-import { useState } from 'react'
+import { TriangleAlert } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useAuth } from '@/auth/AuthProvider'
 import { KindBadge } from '@/components/badges'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { LANGS } from '@/data/mock'
-import { useStore } from '@/store'
+import { usePolling } from '@/hooks/usePolling'
+import { toRow } from '@/lib/audit'
+import { LANGS, POLL_MS } from '@/lib/constants'
 import type { AuditKind } from '@/types'
 
 const EVENT_FILTERS: { value: string; label: string; kinds?: AuditKind[] }[] = [
   { value: 'all', label: 'All events' },
   { value: 'flagged', label: 'Flagged messages', kinds: ['JAILBREAK', 'PROMPT_INJECTION'] },
-  { value: 'requests', label: 'Requests', kinds: ['REQUEST', 'AUTO_REFUND'] },
+  { value: 'requests', label: 'Requests', kinds: ['REQUEST'] },
   { value: 'decisions', label: 'Decisions', kinds: ['VOTE', 'APPLIED', 'DENIED', 'BLOCKED'] },
 ]
 
 const LANG_FILTERS = [{ value: 'all', label: 'All' }, ...LANGS.map((l) => ({ value: l.code, label: l.code }))]
 
 export default function Audit() {
-  const { state } = useStore()
+  const { api } = useAuth()
+  const { data, error, reload } = usePolling(api.audit, POLL_MS)
   const [event, setEvent] = useState('all')
   const [lang, setLang] = useState('all')
 
-  const flagged = state.audit.filter((e) => e.kind === 'JAILBREAK' || e.kind === 'PROMPT_INJECTION')
-  const checked = state.audit.filter((e) => ['BENIGN', 'JAILBREAK', 'PROMPT_INJECTION'].includes(e.kind)).length
-  const refunds = state.audit.filter((e) => e.kind === 'APPLIED' || e.kind === 'AUTO_REFUND').length
+  const all = useMemo(() => [...(data ?? [])].reverse().map(toRow), [data])
+  const flagged = all.filter((e) => e.kind === 'JAILBREAK' || e.kind === 'PROMPT_INJECTION')
+  const checked = all.filter((e) => e.kind === 'MESSAGE').length
+  const refunds = all.filter((e) => e.kind === 'APPLIED' && e.detail.includes('refunded')).length
   const byLang = LANGS.map((l) => ({ code: l.code, n: flagged.filter((e) => e.lang === l.code).length }))
 
   const kinds = EVENT_FILTERS.find((f) => f.value === event)?.kinds
-  const rows = state.audit.filter(
-    (e) => (!kinds || kinds.includes(e.kind)) && (lang === 'all' || e.lang === lang),
-  )
+  const rows = all.filter((e) => (!kinds || kinds.includes(e.kind)) && (lang === 'all' || e.lang === lang))
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-8">
@@ -37,6 +42,17 @@ export default function Audit() {
         <h1 className="text-3xl font-semibold tracking-tight">Audit log</h1>
         <p className="text-muted-foreground">Read-only. Nobody can edit entries or approve alone.</p>
       </div>
+      {error && (
+        <Alert variant="destructive">
+          <TriangleAlert aria-hidden />
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            {error.message}
+            <Button size="sm" variant="outline" onClick={() => void reload()}>
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <section aria-label="Summary" className="flex flex-wrap gap-4">
         <Stat label="Messages checked" value={checked} />
@@ -110,7 +126,7 @@ export default function Audit() {
                 <TableCell className="px-4 whitespace-normal">{e.detail}</TableCell>
               </TableRow>
             ))}
-            {rows.length === 0 && (
+            {data && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   No entries match these filters.

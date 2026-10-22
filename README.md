@@ -30,7 +30,7 @@ _TODO: link to demo video._
 
 | Part | Status | Note |
 |---|---|---|
-| TideCloak login and roles | Real | Local Docker server |
+| TideCloak login and roles | Simulated for now | Dev persona login (`VITE_AUTH_MODE=mock`). The real TideCloak realm could not be created on 22 Oct: Tide's licensing service returned errors (`setUpTideRealm`, 4 attempts). Bootstrap scripts are in `scripts/tidecloak/`. |
 | Agent identity with a narrow role | TBD | Real if FR8 lands, otherwise simulated |
 | Attack check | Real | LLM prompt with rule-based fallback |
 | 2-of-3 approval | Simulated | Enforced in app code, not by Tide |
@@ -42,6 +42,19 @@ _TODO: link to demo video._
 ```bash
 cp .env.example .env   # then fill in the values
 ```
+
+### Run the whole app (mock login)
+
+```bash
+# terminal 1: API on :4000 (mock auth; set OPENAI_API_KEY in .env for the real agent)
+cd server && AUTH_MODE=mock npm run dev
+# terminal 2: frontend on :5173, proxies /api to the API
+cd frontend && npm install && npm run dev
+```
+
+Sign in as a persona on the login page. Demo path: An Nguyen sends the Portuguese attack, then sign in as Approver 1 and Approver 2 (separate browser tabs or profiles) and deny it. Checked end to end in the browser on 22 Oct 2026 (mock login, rule-based agent): Italian order question, Portuguese injection held and flagged, two approvers deny it, a genuine large refund approved by two different approvers and applied, audit log shows every step. The contrast shot (same attack against an admin-token agent) runs through the API only: `cd server && npm run demo`.
+
+The agent and attack check use OpenAI when `OPENAI_API_KEY` is set, otherwise the rule-based fallback.
 
 ### Backend (Express + TypeScript)
 
