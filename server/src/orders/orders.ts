@@ -1,5 +1,5 @@
 import type { Store } from '../store/store.js';
-import { HttpError, type Order, type Principal } from '../types.js';
+import { HttpError, type Order } from '../types.js';
 
 export function seedOrders(store: Store, customerSubs: string[] = ['cust-an', 'cust-binh']): void {
   const [a, b = a] = customerSubs;
@@ -19,13 +19,6 @@ export function seedOrders(store: Store, customerSubs: string[] = ['cust-an', 'c
 export function getOrderOnBehalf(store: Store, customerSub: string, orderId: string): Order | undefined {
   const o = store.orders.get(orderId);
   return o && o.customerSub === customerSub ? o : undefined;
-}
-
-export function getOrderFor(store: Store, who: Principal, orderId: string): Order | undefined {
-  const o = store.orders.get(orderId);
-  if (!o) return undefined;
-  if (who.roles.includes('support-agent')) return o;
-  return who.roles.includes('customer') && o.customerSub === who.sub ? o : undefined;
 }
 
 export function markRefunded(store: Store, orderId: string): void {

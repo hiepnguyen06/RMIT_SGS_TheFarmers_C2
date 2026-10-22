@@ -5,7 +5,7 @@ import { loadConfig } from '../src/config.js';
 import { bearer, testApp } from './helpers.js';
 import type { Principal } from '../src/types.js';
 
-const tc = loadConfig({ AUTH_MODE: 'tidecloak', TIDECLOAK_URL: 'http://tc', AGENT_CLIENT_ID: 'agent', AGENT_CLIENT_SECRET: 's' });
+const tc = loadConfig({ AUTH_MODE: 'tidecloak', TIDECLOAK_URL: 'http://tc', TIDECLOAK_AUDIENCE: 'safedesk-web', AGENT_CLIENT_ID: 'agent', AGENT_CLIENT_SECRET: 's' });
 
 function fakeFetch(expiresIn = 300) {
   const calls: string[] = [];

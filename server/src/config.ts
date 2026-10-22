@@ -23,6 +23,15 @@ const schema = z
   })
   .refine((c) => c.AUTH_MODE !== 'tidecloak' || !!c.TIDECLOAK_URL, {
     message: 'TIDECLOAK_URL is required when AUTH_MODE=tidecloak',
+  })
+  .refine((c) => c.AUTH_MODE !== 'tidecloak' || !!c.TIDECLOAK_AUDIENCE, {
+    message: 'TIDECLOAK_AUDIENCE is required when AUTH_MODE=tidecloak',
+  })
+  .refine((c) => !(c.AUTH_MODE === 'mock' && c.NODE_ENV === 'production'), {
+    message: 'AUTH_MODE=mock is not allowed when NODE_ENV=production',
+  })
+  .refine((c) => c.APPROVALS_REQUIRED >= 1 && c.APPROVALS_REQUIRED <= c.APPROVER_COUNT, {
+    message: 'APPROVALS_REQUIRED must be between 1 and APPROVER_COUNT',
   });
 
 export type Config = z.infer<typeof schema>;

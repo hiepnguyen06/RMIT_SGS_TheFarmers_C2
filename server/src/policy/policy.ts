@@ -32,11 +32,15 @@ export function authorize(call: ToolCall, actor: Principal, ctx: PolicyCtx): Dec
   if (!order) return deny('order not found for this customer');
 
   if (call.tool === 'get_order') return { allow: true, mode: 'execute' };
+  if (call.tool !== 'issue_refund') return deny('unknown tool');
 
   const amt = call.amountVnd;
   if (typeof amt !== 'number' || !Number.isInteger(amt) || amt < 1) return deny('invalid refund amount');
   if (order.status === 'refunded') return deny('order already refunded');
   if (amt > order.amountVnd) return deny('refund exceeds order total');
+  for (const r of ctx.store.requests.values()) {
+    if (r.orderId === call.orderId && r.status === 'pending') return deny('a refund request for this order is already pending');
+  }
 
   if (ctx.unsafe) return { allow: true, mode: 'execute' };
   if (ctx.flag && ctx.flag !== 'BENIGN') return { allow: true, mode: 'pending' };

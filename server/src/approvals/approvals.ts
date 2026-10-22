@@ -47,8 +47,14 @@ export function vote(
   const approvals = req.votes.filter((x) => x.vote === 'approve').length;
   const denials = req.votes.length - approvals;
   if (approvals >= config.APPROVALS_REQUIRED) {
-    req.status = 'approved';
+    if (store.orders.get(req.orderId)?.status === 'refunded') {
+      req.status = 'denied';
+      audit.append('request_resolved', approver.sub, { requestId, status: req.status, reason: 'order already refunded' });
+      store.save();
+      return req;
+    }
     executeRefund(store, audit, { tool: 'issue_refund', orderId: req.orderId, amountVnd: req.amountVnd, reason: req.reason }, 'approvals');
+    req.status = 'approved';
   } else if (denials > config.APPROVER_COUNT - config.APPROVALS_REQUIRED) {
     req.status = 'denied';
   }

@@ -40,7 +40,7 @@ export function makeClaudeAgent(config: Config, client: Pick<Anthropic, 'message
         messages.push({ role: 'assistant', content: res.content });
         const results: Anthropic.ToolResultBlockParam[] = [];
         for (const u of uses) {
-          const out = await execTool({ tool: u.name, ...(u.input as object) } as ToolCall);
+          const out = await execTool({ ...(u.input as object), tool: u.name } as ToolCall);
           results.push({ type: 'tool_result', tool_use_id: u.id, content: JSON.stringify(out) });
         }
         messages.push({ role: 'user', content: results });
