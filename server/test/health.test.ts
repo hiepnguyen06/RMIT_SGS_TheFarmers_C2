@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
+import { testApp } from './helpers.js';
 
 describe('health', () => {
   it('GET /health -> ok', async () => {
-    const app = createApp({ config: loadConfig({}) });
-    const res = await request(app).get('/health');
+    const res = await request(testApp().app).get('/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
   });

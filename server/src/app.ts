@@ -1,11 +1,18 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import type { Config } from './config.js';
+import type { Store } from './store/store.js';
+import type { AuditLog } from './audit/audit.js';
+import type { Verifier } from './auth/jwt.js';
 import { HttpError } from './types.js';
 import { healthRouter } from './routes/health.js';
+import { approvalsRouter } from './routes/approvals.js';
 
 export interface Deps {
   config: Config;
+  store: Store;
+  audit: AuditLog;
+  verifier: Verifier;
 }
 
 export function createApp(deps: Deps): Express {
@@ -13,6 +20,7 @@ export function createApp(deps: Deps): Express {
   app.use(cors({ origin: deps.config.APP_URL }));
   app.use(express.json());
   app.use(healthRouter);
+  app.use(approvalsRouter(deps));
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
     console.error(err instanceof Error ? err.message : err);
