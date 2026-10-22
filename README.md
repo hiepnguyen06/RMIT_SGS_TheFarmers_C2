@@ -53,7 +53,7 @@ npm run demo      # scripted run of the demo scenario (mock auth)
 npm run dev       # API on http://localhost:4000
 ```
 
-`AUTH_MODE=mock` accepts `Authorization: Bearer mock:<sub>:<role,role>` for local work; `AUTH_MODE=tidecloak` verifies real TideCloak tokens (see `server/scripts/seed-realm.md`). Without `ANTHROPIC_API_KEY` the agent and attack check use the rule-based fallback.
+`AUTH_MODE=mock` accepts `Authorization: Bearer mock:<sub>:<role,role>` for local work; `AUTH_MODE=tidecloak` verifies real TideCloak tokens (see `server/scripts/seed-realm.md`). Without `OPENAI_API_KEY` the agent and attack check use the rule-based fallback.
 
 | Endpoint | Role | Purpose |
 |---|---|---|
