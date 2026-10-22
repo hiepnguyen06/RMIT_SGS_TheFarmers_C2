@@ -9,22 +9,23 @@ const TONE = {
   neutral: 'bg-muted text-muted-foreground',
 }
 
-const KIND_TONE: Record<AuditKind, keyof typeof TONE> = {
+const KIND_TONE: Record<AuditKind | AttackLabel, keyof typeof TONE> = {
   BENIGN: 'good',
+  MESSAGE: 'neutral',
   JAILBREAK: 'bad',
   PROMPT_INJECTION: 'bad',
   REQUEST: 'warn',
   APPLIED: 'good',
   DENIED: 'bad',
-  AUTO_REFUND: 'good',
   BLOCKED: 'bad',
   VOTE: 'neutral',
+  ERROR: 'warn',
 }
 
-export function KindBadge({ kind, className }: { kind: AuditKind; className?: string }) {
+export function KindBadge({ kind, className }: { kind: AuditKind | AttackLabel; className?: string }) {
   return (
     <Badge variant="secondary" className={cn('rounded-sm font-mono text-xs', TONE[KIND_TONE[kind]], className)}>
-      {kind.replace('_', kind === 'AUTO_REFUND' ? '-' : '_')}
+      {kind}
     </Badge>
   )
 }

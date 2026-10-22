@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider, useAuth } from '@/auth/AuthProvider'
 import { AppShell, homeFor } from '@/components/AppShell'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -6,16 +7,15 @@ import Approvals from '@/pages/Approvals'
 import Audit from '@/pages/Audit'
 import Chat from '@/pages/Chat'
 import Login from '@/pages/Login'
-import { StoreProvider, useStore } from '@/store'
 
 function Home() {
-  const { state } = useStore()
-  return <Navigate to={state.user ? homeFor(state.user.role) : '/login'} replace />
+  const { user } = useAuth()
+  return <Navigate to={user ? homeFor(user.role) : '/login'} replace />
 }
 
 export default function App() {
   return (
-    <StoreProvider>
+    <AuthProvider>
       <TooltipProvider>
         <BrowserRouter>
           <Routes>
@@ -33,6 +33,6 @@ export default function App() {
         </BrowserRouter>
         <Toaster position="bottom-right" />
       </TooltipProvider>
-    </StoreProvider>
+    </AuthProvider>
   )
 }

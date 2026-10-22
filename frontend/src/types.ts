@@ -3,84 +3,75 @@ export type Lang = 'vi' | 'pt' | 'fr' | 'it' | 'en'
 export type AttackLabel = 'BENIGN' | 'JAILBREAK' | 'PROMPT_INJECTION'
 
 export interface User {
+  /** TideCloak subject (token `sub`). */
   id: string
   name: string
   role: Role
 }
 
+/** Shapes below mirror the Express API (server/src/types.ts). */
 export interface Order {
   id: string
-  customerId: string
+  customerSub: string
+  amountVnd: number
+  status: 'paid' | 'refunded'
   item: string
-  amount: number
-  status: 'out_for_delivery' | 'delivered' | 'refunded'
-  statusDate: string
 }
-
-export interface ChatMessage {
-  id: string
-  from: 'customer' | 'agent'
-  text: string
-  lang: Lang
-  label?: AttackLabel
-  score?: number
-  tool?: string
-  requestId?: string
-  at: string
-}
-
-export type Decision = 'approved' | 'denied'
 
 export interface Vote {
-  approverId: string
-  name: string
-  decision: Decision
+  approverSub: string
+  vote: 'approve' | 'deny'
 }
 
 export interface RefundRequest {
   id: string
   orderId: string
-  item: string
-  customerName: string
-  /** User id of whoever raised it; that person may not vote. */
-  requesterId: string
-  raisedBy: string
-  amount: number
+  item?: string
+  amountVnd: number
   reason: string
-  message: string
-  lang: Lang
-  label: AttackLabel
-  score: number
-  raisedAt: string
-  votes: Vote[]
+  /** Absent on the customer's own-requests list. */
+  originalMessage?: string
+  flag: AttackLabel
+  requestedBy: string
   status: 'pending' | 'approved' | 'denied'
+  votes: Vote[]
+}
+
+export interface ChatAction {
+  tool: 'get_order' | 'issue_refund'
+  outcome: 'ok' | 'executed' | 'pending' | 'denied'
+  requestId?: string
+}
+
+export interface ChatResult {
+  reply: string
+  label: AttackLabel
+  actions: ChatAction[]
+}
+
+export interface AuditEvent {
+  id: number
+  ts: string
+  type: string
+  actorSub: string
+  data: Record<string, unknown>
 }
 
 export type AuditKind =
-  | 'BENIGN'
+  | 'MESSAGE'
   | 'JAILBREAK'
   | 'PROMPT_INJECTION'
   | 'REQUEST'
   | 'APPLIED'
   | 'DENIED'
-  | 'AUTO_REFUND'
   | 'BLOCKED'
   | 'VOTE'
+  | 'ERROR'
 
-export interface AuditEntry {
-  id: string
-  at: string
-  kind: AuditKind
-  actor: string
-  detail: string
-  lang?: Lang
-}
-
-export interface AppState {
-  user: User | null
-  orders: Order[]
-  messages: ChatMessage[]
-  requests: RefundRequest[]
-  audit: AuditEntry[]
-  counters: { msg: number; req: number; audit: number }
+export interface ChatMessage {
+  id: number
+  from: 'customer' | 'agent'
+  text: string
+  label?: AttackLabel
+  requestId?: string
 }
